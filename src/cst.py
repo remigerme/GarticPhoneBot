@@ -1,3 +1,13 @@
+# Keyboard controls
+# Feel free to edit
+KB_CONTROLS = {
+    "interrupt": "esc",
+    "pause": "space"
+}
+
+
+# Default Gartic Phone colors
+# Do not change
 GP_COLORS = [(0, 0, 0),
     (255, 255, 255),
     (102, 102, 102),

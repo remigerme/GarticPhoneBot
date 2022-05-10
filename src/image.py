@@ -23,10 +23,13 @@ def convert_to_gp_image(image, palette):
     im = image.quantize(colors= min(256, len(palette)), palette=im_palette)
     return im
 
-def draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x_, y_):
+def draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x_, y_, check_kb):
     # Draw the picture from the i-th color and (x, y) pixel onward
     # Return the state when finished/interrupted/paused
     # and the current color (i) and position (x, y)
+    # Not recommended to set check_kb to False as
+    # it's not possible to abort the drawing
+    # but this helps gaining time
     n = len(colors)
     (w, h) = gp_image.size
     (x, y) = (x_, y_)
@@ -44,8 +47,8 @@ def draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x_, y_):
         # Paint every pixel of the image of this color
         while x < w and drawing:
             while y < h and drawing:
-                drawing = not (is_pressed(KB_CONTROLS["interrupt"]) or is_pressed(KB_CONTROLS["pause"]))
-                sleep(1e-6)
+                if check_kb:
+                    drawing = not (is_pressed(KB_CONTROLS["interrupt"]) or is_pressed(KB_CONTROLS["pause"]))
                 p = gp_image.getpixel((x, y))
                 if p == i:
                     click(x0 + scale * x, y0 + scale * y)
@@ -67,7 +70,7 @@ def draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x_, y_):
         s = DrawingState.PAUSED
     return (s, i, x, y)
 
-def draw(gp_image, x0, y0, colors, scale):
+def draw(gp_image, x0, y0, colors, scale, check_kb):
     # The size of gp_image must have already been checked
     p_locations = locate_palette(colors)
     print("Palette has been located")
@@ -78,7 +81,7 @@ def draw(gp_image, x0, y0, colors, scale):
     (x, y) = (0, 0)
     drawing = True
     while drawing:
-        (s, i, x, y) = draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x, y)
+        (s, i, x, y) = draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x, y, check_kb)
         sleep(0.5)
         if s == DrawingState.FINISHED:
             drawing = False
@@ -90,7 +93,7 @@ def draw(gp_image, x0, y0, colors, scale):
             print("Drawing resumed")
             sleep(0.5)
 
-def draw_from(image, colors, resize, scale):
+def draw_from(image, colors, resize, scale, check_kb):
     # Use the allowed palette
     palette = get_palette_from_colors(colors)
     gp_image = convert_to_gp_image(image, palette)
@@ -108,12 +111,12 @@ def draw_from(image, colors, resize, scale):
         top = h // d - min(h, h0) // d
         bottom = h // d + min(h, h0) // d
         gp_image = gp_image.crop((left, top, right, bottom))
-    draw(gp_image, x0, y0, colors, scale)
+    draw(gp_image, x0, y0, colors, scale, check_kb)
 
 def main():
     input()
     im = Image.open("yoshi.jpg")
-    draw_from(im, GP_COLORS, True, 6)
+    draw_from(im, GP_COLORS, True, 6, True)
 
 if __name__ == "__main__":
     main()

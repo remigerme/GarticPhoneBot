@@ -1,8 +1,14 @@
-import time
-import win32api, win32con
+from time import sleep
+from platform import system
+
+SYS = system().lower()
+if SYS == "windows" or SYS == "linux":
+    import mouse
+else: # macos ie sys = "darwin"
+    pass
+
 
 def click(x, y):
-    win32api.SetCursorPos((x, y))
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-    time.sleep(1e-5)
-    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+    mouse.move(x, y, True, 0)
+    sleep(1e-6)
+    mouse.click("left")

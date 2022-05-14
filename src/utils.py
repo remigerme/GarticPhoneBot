@@ -5,7 +5,7 @@ SYS = system().lower()
 if SYS == "windows" or SYS == "linux":
     import mouse
 else: # macos ie sys = "darwin"
-    pass
+    raise Exception("Macos not supported")
 
 
 def click(x, y):

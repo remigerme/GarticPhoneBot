@@ -59,10 +59,11 @@ def draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x_, y_, chec
         if drawing:
             x = 0
             i += 1
+
     if i == n:
         print("Drawing finished")
         s = DrawingState.FINISHED
-    elif is_pressed("esc"):
+    elif is_pressed(KB_CONTROLS["interrupt"]):
         print("Drawing interrupted")
         s = DrawingState.INTERRUPTED
     else:
@@ -82,6 +83,66 @@ def draw(gp_image, x0, y0, colors, scale, check_kb):
     drawing = True
     while drawing:
         (s, i, x, y) = draw_partially(gp_image, p_locations, x0, y0, colors, scale, i, x, y, check_kb)
+        sleep(0.5)
+        if s == DrawingState.FINISHED:
+            drawing = False
+        elif s == DrawingState.INTERRUPTED:
+            drawing = False
+        else:
+            while not is_pressed(KB_CONTROLS["pause"]):
+                pass
+            print("Drawing resumed")
+            sleep(0.5)
+
+def draw_partially_pixel_by_pixel(gp_image, p_locations, x0, y0, colors, scale, x_, y_, check_kb):
+    # Draw the picture pixel by pixel from the (x, y) pixel onward
+    # Return the state when finished/interrupted/paused
+    # and the current position (x, y)
+    # Not recommended to set check_kb to False as
+    # it's not possible to abort the drawing
+    # but this helps gaining time
+    n = len(colors)
+    (w, h) = gp_image.size
+    (x, y) = (x_, y_)
+    drawing = True
+    while x < w and drawing:
+        while y < h and drawing:
+            if check_kb:
+                drawing = not (is_pressed(KB_CONTROLS["interrupt"]) or is_pressed(KB_CONTROLS["pause"]))
+            p = gp_image.getpixel((x, y))
+            if colors[p] != (255, 255, 255):
+                # Select the color
+                click(*p_locations[colors[p]])
+                # Paint the pixel
+                click(x0 + scale * x, y0 + scale * y)
+            y += 1
+        if drawing:
+            y = 0
+            x += 1
+
+    if x == w:
+        print("Drawing finished")
+        s = DrawingState.FINISHED
+    elif is_pressed(KB_CONTROLS["interrupt"]):
+        print("Drawing interrupted")
+        s = DrawingState.INTERRUPTED
+    else:
+        print("Drawing paused")
+        s = DrawingState.PAUSED
+    return (s, x, y)
+
+def draw_pixel_by_pixel(gp_image, x0, y0, colors, scale, check_kb):
+    # The size of gp_image must have already been checked
+    p_locations = locate_palette(colors)
+    print("Palette has been located")
+    # As we want to be able to pause / interrupt the script
+    # Let's use a while loop and check keyboard events
+    n = len(colors)
+    i = 0
+    (x, y) = (0, 0)
+    drawing = True
+    while drawing:
+        (s, x, y) = draw_partially_pixel_by_pixel(gp_image, p_locations, x0, y0, colors, scale, x, y, check_kb)
         sleep(0.5)
         if s == DrawingState.FINISHED:
             drawing = False
